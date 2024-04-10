@@ -9,8 +9,8 @@ services:
       - .:/app:z
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
@@ -31,6 +31,8 @@ services:
       - local_postgres_data_backups:/backups
     env_file:
       - ./.envs/.local/.postgres
+    ports:
+      - "5432:5432"
     networks:
       - authors-api
   mailhog:
@@ -41,6 +43,67 @@ services:
     networks:
       - authors-api
 
+  nginx:
+    restart: always
+    depends_on:
+      - api
+    build:
+      context: ./docker/local/nginx
+      dockerfile: Dockerfile
+
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+
+    ports:
+      - "8080:80"
+    networks:
+      - authors-api
+
+  redis:
+    image: redis:latest
+    networks:
+      - authors-api
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
+    command: /start-celeryworker
+    volumes:
+      - .:/app
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+
+    depends_on:
+      - redis
+      - postgres
+      - mailhog
+    networks:
+      - authors-api
+
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
+    command: /start-flower
+    volumes:
+      - flower_data:/data
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - authors-api
+
+
+
 networks:
   authors-api:
     driver: bridge
@@ -48,5 +111,6 @@ networks:
 volumes:
   static_volume:
   media_volume:
-  local_postgres_data: {}
-  local_postgres_data_backups: {}
+  local_postgres_data: { }
+  local_postgres_data_backups: { }
+  flower_data: { }
