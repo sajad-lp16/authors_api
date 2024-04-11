@@ -42,6 +42,10 @@ class Article(TimeStampedModel):
         return self.claps_set.count()
 
     @property
+    def comment_count(self):
+        return self.comments.count()
+
+    @property
     def average_rating(self):
         ratings = self.ratings.all()
 

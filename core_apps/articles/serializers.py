@@ -1,13 +1,11 @@
 from collections.abc import Sequence
 
 from django.utils import timezone
-from django.db import IntegrityError
-from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
-from rest_framework.serializers import ValidationError
 
 from core_apps.bookmarks.serializers import BookmarkSerializer
+from core_apps.comments.serializers import CommentSerializer
 
 from core_apps.articles.models import (
     Article,
@@ -41,6 +39,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     banner_image = serializers.CharField(source="banner_image.url", read_only=True)
     tags = TagListField()
     bookmarks = serializers.SerializerMethodField(read_only=True)
+    comments = CommentSerializer(read_only=True, many=True)
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
@@ -95,6 +94,8 @@ class ArticleSerializer(serializers.ModelSerializer):
             "claps_count",
             "bookmark_count",
             "bookmarks",
+            "comment_count",
+            "comments",
             "average_rating",
             "description",
             "body",
