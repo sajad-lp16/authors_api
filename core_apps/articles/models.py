@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 
@@ -27,8 +28,17 @@ class Article(TimeStampedModel):
     def estimated_reading(self):
         return ArticleReadTimeEngine.estimate_reading_time(self)
 
+    @property
     def view_count(self):
         return self.article_views.count()
+
+    @property
+    def average_rating(self):
+        ratings = self.ratings.all()
+
+        if ratings.count() > 0:
+            average_rating = ratings.aggregate(average_rating=Avg("rating"))["average_rating"]
+            return round(average_rating, 2)
 
 
 class ArticleView(TimeStampedModel):

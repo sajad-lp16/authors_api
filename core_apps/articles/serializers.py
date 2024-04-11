@@ -31,16 +31,12 @@ class TagListField(serializers.Field):
 
 class ArticleSerializer(serializers.ModelSerializer):
     author_info = ProfileSerializer(source="author.profile", read_only=True)
-    estimated_reading_time = serializers.ReadOnlyField()
+    estimated_reading_time = serializers.SerializerMethodField(read_only=True)
     banner_image = serializers.CharField(source="banner_image.url", read_only=True)
     tags = TagListField()
-    views = serializers.SerializerMethodField()
+    views = serializers.SerializerMethodField(read_only=True)
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
-
-    @staticmethod
-    def get_views(instance):
-        return ArticleView.objects.filter(article=instance).count()
 
     @staticmethod
     def get_created_at(instance):
@@ -51,6 +47,14 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_updated_at(instance):
         instance_creation_time = instance.updated_at
         return instance_creation_time.strftime("%Y_%m_%d %H:%M:%S")
+
+    @staticmethod
+    def get_views(instance):
+        return instance.view_count
+
+    @staticmethod
+    def get_estimated_reading_time(instance):
+        return instance.estimated_reading
 
     def create(self, validated_data):
         tags = validated_data.pop("tags")
@@ -81,6 +85,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             "estimated_reading_time",
             "author_info",
             "views",
+            "average_rating",
             "description",
             "body",
             "banner_image",
