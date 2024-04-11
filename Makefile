@@ -13,6 +13,10 @@ show-logs:
 show-logs-api:
 	docker-compose -f local.yml logs api
 
+check:
+	docker-compose -f local.yml run --rm api python manage.py check
+
+
 makemigrations:
 	docker-compose -f local.yml run --rm api python manage.py makemigrations
 

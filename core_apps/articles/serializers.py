@@ -3,10 +3,9 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
-from core_apps.articles.models import (
-    Article,
-    ArticleView
-)
+from core_apps.bookmarks.serializers import BookmarkSerializer
+
+from core_apps.articles.models import Article
 
 from core_apps.profiles.serializers import ProfileSerializer
 
@@ -34,7 +33,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     estimated_reading_time = serializers.SerializerMethodField(read_only=True)
     banner_image = serializers.CharField(source="banner_image.url", read_only=True)
     tags = TagListField()
-    views = serializers.SerializerMethodField(read_only=True)
+    bookmarks = serializers.SerializerMethodField(read_only=True)
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
@@ -49,12 +48,13 @@ class ArticleSerializer(serializers.ModelSerializer):
         return instance_creation_time.strftime("%Y_%m_%d %H:%M:%S")
 
     @staticmethod
-    def get_views(instance):
-        return instance.view_count
-
-    @staticmethod
     def get_estimated_reading_time(instance):
         return instance.estimated_reading
+
+    @staticmethod
+    def get_bookmarks(instance):
+        bookmarks = instance.bookmarks.all()
+        return BookmarkSerializer(bookmarks, many=True).data
 
     def create(self, validated_data):
         tags = validated_data.pop("tags")
@@ -84,7 +84,9 @@ class ArticleSerializer(serializers.ModelSerializer):
             "tags",
             "estimated_reading_time",
             "author_info",
-            "views",
+            "view_count",
+            "bookmark_count",
+            "bookmarks",
             "average_rating",
             "description",
             "body",

@@ -33,6 +33,10 @@ class Article(TimeStampedModel):
         return self.article_views.count()
 
     @property
+    def bookmark_count(self):
+        return self.bookmarks.count()
+
+    @property
     def average_rating(self):
         ratings = self.ratings.all()
 
