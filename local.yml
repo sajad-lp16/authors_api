@@ -1,6 +1,19 @@
 version: "3.9"
 
 services:
+  es:
+    image: elasticsearch:7.17.20
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    networks:
+      - authors-api
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 4000M
   api:
     build:
       context: .

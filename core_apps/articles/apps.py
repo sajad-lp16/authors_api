@@ -6,3 +6,6 @@ class ArticlesConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "core_apps.articles"
     verbose_name = _("Articles")
+
+    def ready(self):
+        from core_apps.search import signals
