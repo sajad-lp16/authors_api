@@ -1,11 +1,18 @@
 from collections.abc import Sequence
+
 from django.utils import timezone
+from django.db import IntegrityError
+from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 
 from core_apps.bookmarks.serializers import BookmarkSerializer
 
-from core_apps.articles.models import Article
+from core_apps.articles.models import (
+    Article,
+    Claps
+)
 
 from core_apps.profiles.serializers import ProfileSerializer
 
@@ -85,6 +92,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             "estimated_reading_time",
             "author_info",
             "view_count",
+            "claps_count",
             "bookmark_count",
             "bookmarks",
             "average_rating",
@@ -94,3 +102,16 @@ class ArticleSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+class ClapSerializer(serializers.ModelSerializer):
+    user_first_name = serializers.CharField(source="user.first_name", read_only=True)
+    article_title = serializers.CharField(source="article.title", read_only=True)
+
+    class Meta:
+        model = Claps
+        fields = (
+            "id",
+            "user_first_name",
+            "article_title",
+        )

@@ -20,6 +20,7 @@ class Article(TimeStampedModel):
     body = models.TextField(verbose_name=_("Article content"))
     banner_image = models.ImageField(verbose_name=_("Banner image"), default="/profile_default.jpg")
     tags = TaggableManager()
+    claps = models.ManyToManyField(User, through="Claps", related_name="clapped_articles")
 
     def __str__(self):
         return f"{self.author.first_name}s article"
@@ -35,6 +36,10 @@ class Article(TimeStampedModel):
     @property
     def bookmark_count(self):
         return self.bookmarks.count()
+
+    @property
+    def claps_count(self):
+        return self.claps_set.count()
 
     @property
     def average_rating(self):
@@ -61,3 +66,17 @@ class ArticleView(TimeStampedModel):
     @classmethod
     def record_view(cls, article, user, viewer_ip):
         view, _ = cls.objects.get_or_create(article=article, user=user, viewer_ip=viewer_ip)
+
+
+class Claps(TimeStampedModel):
+    user = models.ForeignKey(User, related_name="claps", on_delete=models.CASCADE, verbose_name=_("user"))
+    article = models.ForeignKey(Article, related_name="claps_set", on_delete=models.CASCADE, verbose_name=_("article"))
+
+    class Meta:
+        verbose_name = _("Clap")
+        verbose_name_plural = _("Claps")
+        ordering = ["-created_at", "-updated_at"]
+        unique_together = ["user", "article"]
+
+    def __str__(self):
+        return f"{self.user.first_name} clapped for {self.article.title}"

@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from core_apps.articles.models import (
     Article,
-    ArticleView
+    ArticleView,
+    Claps
 )
 
 
@@ -21,3 +22,10 @@ class ArticleViewAdmin(admin.ModelAdmin):
     list_display_links = ["pkid", "article"]
     list_filter = ["created_at", "updated_at"]
     search_fields = ["article", "user", "viewer_ip"]
+
+
+@admin.register(Claps)
+class ClapsAdmin(admin.ModelAdmin):
+    list_display = ["pkid", "id", "user", "article"]
+    list_display_links = ["id", "user"]
+    list_filter = ["user", "article"]

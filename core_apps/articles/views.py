@@ -1,10 +1,13 @@
 import logging
 
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.core.files.storage import default_storage
 
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import (
     MultiPartParser,
     FormParser,
@@ -20,16 +23,20 @@ from rest_framework import (
 from django_filters.rest_framework import DjangoFilterBackend
 
 from core_apps.articles.filters import ArticleFilter
-from core_apps.articles.serializers import ArticleSerializer
+from core_apps.articles.serializers import (
+    ArticleSerializer,
+    ClapSerializer
+)
 from core_apps.articles.pagination import ArticlePagination
-from core_apps.articles.permissions import IsOwnerOrReadonly
+from core_apps.common.permissions import IsOwnerOrReadonly
 from core_apps.articles.renderers import (
     ArticleJSONRenderer,
     ArticlesJSONRenderer
 )
 from core_apps.articles.models import (
     Article,
-    ArticleView
+    ArticleView,
+    Claps
 )
 
 User = get_user_model()
@@ -78,3 +85,25 @@ class ArticleRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         ArticleView.record_view(instance, self.request.user, viewer_ip)
 
         return Response(serialized_data.data)
+
+
+class ClapArticleAPIView(generics.CreateAPIView, generics.DestroyAPIView):
+    queryset = Claps.objects.all()
+    serializer_class = ClapSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadonly]
+
+    def create(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=self.kwargs.get("article_id"))
+
+        try:
+            instance = Claps.objects.create(article=article, user=request.user)
+        except IntegrityError:
+            raise ValidationError({"detail": "you have already clapped for this article"})
+
+        serializer = self.get_serializer(instance=instance)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def destroy(self, request, *args, **kwargs):
+        get_object_or_404(Claps, article__id=self.kwargs.get("article_id")).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
