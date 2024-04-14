@@ -66,7 +66,7 @@ class CustomRegisterSerializer(RegisterSerializer):
 
         setup_user_email(request, user, [])
         user.email = self.cleaned_data.get("email")
-        user.password = self.cleaned_data.get("password1")
+        user.set_password(self.cleaned_data.get("password1"))
         self.first_name = self.cleaned_data.get("first_name")
         self.last_name = self.cleaned_data.get("last_name")
 
